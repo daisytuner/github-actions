@@ -1,0 +1,28 @@
+name: "Run benchmarks with daisy"
+description: "A Github action for automatic benchmarking with Daisy"
+author: "Daisytuner"
+inputs:
+  repo_name:
+    description: "Repository name."
+    required: true
+  commit_sha:
+    description: "Commit SHA of the code."
+    required: true
+  pr_number:
+    description: "Pull request number."
+    required: true
+  base_image:
+    description: "Base image for the job."
+    required: true
+  script:
+    description: "Script to run in the container."
+    required: true
+  benchmarks:
+    description: "Benchmarks to execute."
+    required: true
+  timeout:
+    description: "Timeout for the job."
+    required: true
+runs:
+  using: "node16"
+  main: "dist/index.js"
