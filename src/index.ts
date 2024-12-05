@@ -9,7 +9,7 @@ async function run() {
     const prNumber = core.getInput("pr_number");
     const baseImage = core.getInput("base_image");
     const script = core.getInput("script");
-    const timeout = parseInt(core.getInput("timeout"));
+    const timeout = parseInt(core.getInput("timeout")) * 1000 * 60; // convert minutes to ms
     const benchmarks = JSON.parse(core.getInput("benchmarks"));
 
     // Construct payload
@@ -23,35 +23,52 @@ async function run() {
     };
 
     // Post to Firebase function
-    core.info("Submitting job");
+    core.info("Submitting job to the backend...");
     const response = await axios.default.post("https://create-bhqsvyw3sa-uc.a.run.app", payload, {
       headers: { "Content-Type": "application/json" },
     });
-    if (response.status === 200) {
-      core.info("Job posted successfully!");
-    } else {
-      core.setFailed(`Failed to post job. Status: ${response.status}`);
-    }
-    const jobId = response.data.job_id;
 
-    const endTime = Date.now() + timeout;
+    if (response.status !== 200) {
+      core.setFailed(`Failed to submit job. Status: ${response.status}`);
+      return;
+    }
+  
+    const jobId = response.data.jobId;
+    core.info(`Job posted successfully! Job ID: ${jobId}`);
 
     // Poll job status
-    let jobCompleted = false;
-    while (!jobCompleted) {
+    core.info(`Waiting for a runner to pickup the job...`);
+
+    const endTime = Date.now() + timeout;
+    let status = "pending";
+    let lastLogLength = 0;
+    while (status !== "completed" && status !== "failed") {
       if (Date.now() > endTime) {
-        throw new Error("Job polling timed out.");
+        throw new Error(`Action timed out after ${timeout / 1000 } seconds.`);
       }
 
-      core.info(`Checking job status for ID: ${jobId}`);
-      const response = await axios.default.post("https://status-bhqsvyw3sa-uc.a.run.app", {jobId: jobId}, {
-        headers: { "Content-Type": "application/json" },
-      });
-      const job = response.data;
+      const statusResponse = await axios.default.post(
+        "https://status-bhqsvyw3sa-uc.a.run.app",
+        { jobId },
+        { headers: { "Content-Type": "application/json" } }
+      );
+      if (statusResponse.status !== 200) {
+        throw new Error(`Failed to fetch job status. Status: ${statusResponse.status}`);
+      }
 
-      core.info(`Current job status: ${job.status}`);
+      const job = statusResponse.data;
+      if (status === "pending" && job.status !== "pending") {
+        core.info(`Runner has picked up the job!`);
+        status = job.status;
+      }
+
+      // Print new log output
       if (job.log) {
-        core.info(`Streaming log:\n${job.log}`);
+        const newLog = job.log.slice(lastLogLength); // Get only the new part of the log
+        if (newLog) {
+          core.info(`${newLog}`);
+        }
+        lastLogLength = job.log.length;
       }
 
       if (job.status === "completed" || job.status === "failed") {
@@ -59,13 +76,15 @@ async function run() {
         if (job.status === "failed") {
           core.setFailed(`Job ${jobId} failed.`);
         }
-        jobCompleted = true;
+        status = job.status;
       } else {
-        await new Promise((resolve) => setTimeout(resolve, 100));
+        // Wait before polling again
+        await new Promise((resolve) => setTimeout(resolve, 1000)); // Poll every 1 second
       }
     }
   } catch (error: any) {
-    core.setFailed(`Error posting job: ${error.message}`);
+    core.error(`An error occurred: ${error.message}`);
+    core.setFailed(error.message);
   }
 }
 
