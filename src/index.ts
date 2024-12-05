@@ -4,7 +4,9 @@ import * as axios from "axios";
 async function run() {
   try {
     // Read inputs
+    const repoUrl = core.getInput("repo_url");
     const repoName = core.getInput("repo_name");
+    const repoOwner = core.getInput("repo_owner");
     const commitSha = core.getInput("commit_sha");
     const prNumber = core.getInput("pr_number");
     const baseImage = core.getInput("base_image");
@@ -14,7 +16,9 @@ async function run() {
 
     // Construct payload
     const payload = {
+      repo_url: repoUrl,
       repo_name: repoName,
+      repo_owner: repoOwner,
       commit_sha: commitSha,
       pr_number: prNumber,
       base_image: baseImage,
