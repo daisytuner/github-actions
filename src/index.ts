@@ -1,26 +1,39 @@
 import * as core from "@actions/core";
+import * as github from "@actions/github";
 import * as axios from "axios";
 
 async function run() {
   try {
     // Read inputs
-    const repoUrl = core.getInput("repo_url");
-    const repoName = core.getInput("repo_name");
-    const repoOwner = core.getInput("repo_owner");
-    const commitSha = core.getInput("commit_sha");
-    const prNumber = core.getInput("pr_number");
     const baseImage = core.getInput("base_image");
     const script = core.getInput("script");
     const timeout = parseInt(core.getInput("timeout")) * 1000 * 60; // convert minutes to ms
     const benchmarks = JSON.parse(core.getInput("benchmarks"));
+
+    const repoUrl = github.context.payload.repository?.git_url;
+    const repoName = github.context.payload.repository?.name;
+    const repoOwner = github.context.payload.repository!.owner.login;
+    const isPrivate = github.context.payload.repository?.private;
+    if (!repoUrl || !repoName || !repoOwner || isPrivate === undefined) {
+      throw new Error("Missing repository information in the github context.");
+    }
+
+    const commitSha = github.context.sha;
+    const runNumber = github.context.runNumber;
+    const actor = github.context.actor;
+    if (!commitSha || !actor) {
+      throw new Error("Missing PR information in the github context");
+    }
 
     // Construct payload
     const payload = {
       repo_url: repoUrl,
       repo_name: repoName,
       repo_owner: repoOwner,
+      is_private: isPrivate,
       commit_sha: commitSha,
-      pr_number: prNumber,
+      run_number: runNumber,
+      actor: actor,
       base_image: baseImage,
       script: script,
       benchmarks: benchmarks
@@ -42,7 +55,6 @@ async function run() {
 
     // Poll job status
     core.info(`Waiting for a runner to pickup the job...`);
-
     const endTime = Date.now() + timeout;
     let status = "pending";
     let lastLogLength = 0;
@@ -54,7 +66,11 @@ async function run() {
       const statusResponse = await axios.default.post(
         "https://status-bhqsvyw3sa-uc.a.run.app",
         { jobId },
-        { headers: { "Content-Type": "application/json" } }
+        {
+          headers: {
+            "Content-Type": "application/json"
+          }
+        }
       );
       if (statusResponse.status !== 200) {
         throw new Error(`Failed to fetch job status. Status: ${statusResponse.status}`);

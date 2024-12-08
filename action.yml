@@ -2,21 +2,6 @@ name: "Run benchmarks with daisy"
 description: "A Github action for automatic benchmarking with Daisy"
 author: "Daisytuner"
 inputs:
-  repo_url:
-    description: "Repo URL."
-    required: true
-  repo_owner:
-    description: "Owner."
-    required: true
-  repo_name:
-    description: "Repo name."
-    required: true
-  commit_sha:
-    description: "Commit SHA of the code."
-    required: true
-  pr_number:
-    description: "Pull request number."
-    required: true
   base_image:
     description: "Base image for the job."
     required: true
