@@ -1,15 +1,18 @@
-name: "Run benchmarks with daisy"
-description: "A Github action for automatic benchmarking with Daisy"
+name: "Daisytuner GitHub Action"
+description: "An action to run benchmarks with Daisytuner."
 author: "Daisytuner"
 inputs:
   base_image:
     description: "Base image for the job."
     required: true
-  script:
-    description: "Script to run in the container."
+  build:
+    description: "Section to install dependencies and build the project."
     required: true
-  benchmarks:
-    description: "Benchmarks to execute."
+  stage:
+    description: "Section to build benchmarks."
+    required: true
+  run:
+    description: "Section to run benchmarks."
     required: true
   timeout:
     description: "Timeout for the job."
