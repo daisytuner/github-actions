@@ -5,6 +5,9 @@ inputs:
   base_image:
     description: "Base image for the job."
     required: true
+  partition:
+    description: "Partition for the job."
+    required: true
   build:
     description: "Section to install dependencies and build the project."
     required: true

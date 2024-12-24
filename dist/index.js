@@ -47511,11 +47511,12 @@ async function run() {
     try {
         // Read inputs
         const baseImage = core.getInput("base_image");
+        const partition = core.getInput("partition");
         const timeout = parseInt(core.getInput("timeout")) * 1000 * 60; // convert minutes to ms
         const build = core.getInput("build");
         const stage = core.getInput("stage");
         const run = yaml.parse(core.getInput("run"));
-        if (!baseImage || !build || !stage || !run) {
+        if (!baseImage || !partition || !build || !stage || !run) {
             throw new Error("Missing required inputs.");
         }
         for (const [name, command] of Object.entries(run)) {
@@ -47544,6 +47545,7 @@ async function run() {
             actor: actor,
             run_number: runNumber,
             base_image: baseImage,
+            partition: partition,
             build: build,
             stage: stage,
             run: run,
