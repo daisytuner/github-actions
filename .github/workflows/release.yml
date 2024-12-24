@@ -3,7 +3,7 @@ name: Release GitHub Action
 on:
   push:
     tags:
-      - 'v*.*.*' # Matches semantic version tags like v1.0.0
+      - 'v*.*.*' # Matches tags like v1.0.0
 
 jobs:
   release:
@@ -28,22 +28,30 @@ jobs:
     - name: Build action
       run: npm run build
 
-    # Push changes to dist/ (if using pre-built code)
-    - name: Commit and push dist folder
-      if: github.ref_type == 'tag'
+    # Temporarily include dist/ and commit it
+    - name: Prepare dist folder for release
       run: |
-        git config user.name "github-actions[bot]"
-        git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-        git add dist
-        git commit -m "Release ${{ github.ref_name }}"
-        git push
+        git config --global user.email "release@daisytuner.com"
+        git config --global user.name "Release Bot"
 
-    # Create or update the major version tag (e.g., v1)
-    - name: Update major version tag
-      if: github.ref_type == 'tag'
+        echo "Removing dist/ from .gitignore"
+        sed -i '/dist\//d' .gitignore
+        git add dist
+        git commit -m "Include dist/ for release ${{ github.ref_name }}"
+
+    # Push the dist folder to the release tag
+    - name: Push dist folder with tag
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
-        MAJOR_TAG="v${{ github.ref_name%%.* }}"
+        git tag -f ${{ github.ref_name }}
+        git push origin ${{ github.ref_name }} --force
+
+    # Update the major version tag (e.g., v1)
+    - name: Update major version tag
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: |
+        MAJOR_TAG=$(echo "${{ github.ref_name }}" | cut -d. -f1)
         git tag -f $MAJOR_TAG
         git push origin --force $MAJOR_TAG
