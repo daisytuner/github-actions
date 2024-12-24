@@ -1,5 +1,5 @@
-name: "Daisytuner GitHub Action"
-description: "An action to run benchmarks with Daisytuner."
+name: "Continuous Benchmarking with Daisytuner"
+description: "A GitHub Action for Continuous Benchmarking with Daisytuner."
 author: "Daisytuner"
 inputs:
   base_image:

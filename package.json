@@ -1,11 +1,12 @@
 {
     "name": "daisytuner-benchmark-action",
-    "version": "0.0.1",
+    "version": "1.0.0",
     "description": "A GitHub Action to post benchmarks.",
     "main": "dist/index.js",
     "scripts": {
         "build": "ncc build src/index.ts",
-        "prepare": "npm run build"
+        "prepare": "npm run build",
+        "release": "standard-version"
     },
     "dependencies": {
         "@actions/core": "^1.11.1",
@@ -16,6 +17,7 @@
     },
     "devDependencies": {
         "@types/node": "^20.6.0",
+        "standard-version": "^9.5.0",
         "typescript": "^5.2.2"
     }
 }
